@@ -1,0 +1,1 @@
+1. As a user, I want to CRUD a log for a job I've applied to, so that I can track the status of the job.
