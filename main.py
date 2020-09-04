@@ -41,12 +41,14 @@ class LogDialog(QMainWindow):
         grid.setSpacing(5)
         wid.setLayout(grid)
 
-        self.title = QLabel('Title', self)
+        self.title = QLabel('Title')
+        self.company = QLabel('Company')
         self.date = QLabel('Date Applied')
         self.status = QLabel('Status')
         self.url = QLabel('URL')
 
         self.title_edit = QLineEdit(self)
+        self.company_edit = QLineEdit(self)
         self.date_edit = QLineEdit(self)
         self.status_edit = QLineEdit(self)
         self.url_edit = QLineEdit(self)
@@ -54,19 +56,22 @@ class LogDialog(QMainWindow):
         grid.addWidget(self.title, 1, 0)
         grid.addWidget(self.title_edit, 1, 1)
 
-        grid.addWidget(self.date, 2, 0)
-        grid.addWidget(self.date_edit, 2, 1)
+        grid.addWidget(self.company, 2, 0)
+        grid.addWidget(self.company_edit, 2, 1)
 
-        grid.addWidget(self.status, 3, 0)
-        grid.addWidget(self.status_edit, 3, 1)
+        grid.addWidget(self.date, 3, 0)
+        grid.addWidget(self.date_edit, 3, 1)
 
-        grid.addWidget(self.url, 4, 0)
-        grid.addWidget(self.url_edit, 4, 1)
+        grid.addWidget(self.status, 4, 0)
+        grid.addWidget(self.status_edit, 4, 1)
+
+        grid.addWidget(self.url, 5, 0)
+        grid.addWidget(self.url_edit, 5, 1)
 
         self.submit = QPushButton('Submit', self)
         self.submit.clicked.connect(self.on_submit_clicked)
 
-        grid.addWidget(self.submit, 5, 1)
+        grid.addWidget(self.submit, 6, 1)
 
     def on_submit_clicked(self):
         self.log_csv_data()
@@ -75,6 +80,7 @@ class LogDialog(QMainWindow):
     def log_csv_data(self):
         with open("job_logs.csv", mode='a+', newline='') as logscsv:
             entry = [self.title_edit.text(), \
+                     self.company_edit.text(), \
                      self.date_edit.text(), \
                      self.status_edit.text(), \
                      self.url_edit.text()]
