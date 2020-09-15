@@ -1,10 +1,15 @@
 import sys
+import shutil
+from tempfile import NamedTemporaryFile
 from datetime import date
 from dataclasses import dataclass
-from csv import reader, writer
+from csv import reader, writer, DictReader, DictWriter
 from PyQt5.QtWidgets import (QWidget, QLabel, QToolTip, QPushButton, QApplication, QLineEdit, QInputDialog, QGridLayout, QMainWindow, QComboBox, QListWidget, QListWidgetItem, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy)
 from PyQt5.QtGui import QFont
 from PyQt5 import QtGui, QtCore
+
+LOGS_FN = "job_logs.csv"
+FIELD_NAMES = ["title", "company", "status", "date_applied", "date_rejected", "date_interviewed", "date_accepted", "url"]
 
 def status_switch(x):
     return {
@@ -69,8 +74,8 @@ class QCustomQWidget(QWidget):
         self.status_edit = QComboBox() # self?
         #self.update.setStyleSheet("background-color: red")
         self.status_edit.addItems(["No Response", "Rejected", "Interviewed", "Accepted"])
-        self.right_btn_layout.addWidget(self.status_edit, 0)
-        self.right_btn_layout.addWidget(self.update, 1)
+        self.right_btn_layout.addWidget(self.update, 0)
+        self.right_btn_layout.addWidget(self.status_edit, 1)
 
         #Define right sub layout
         self.dateQLabel = QLabel()
@@ -104,8 +109,35 @@ class QCustomQWidget(QWidget):
             self.dateQLabel.setStyleSheet(style_sheet)
     
     def on_update_clicked(self):
-        pass
+        tempfile = NamedTemporaryFile('w+t', newline='', delete=False)
+        with open(LOGS_FN, mode='r', newline='') as logscsv, tempfile:
+            csvreader = DictReader(logscsv, fieldnames=FIELD_NAMES)
+            csvwriter = DictWriter(tempfile, fieldnames=FIELD_NAMES)
 
+            for row in csvreader:
+                if(row['title']+row["company"] == self.upperQLabel.text()+self.lowerQLabel.text()):
+                    status = self.status_edit.currentText()
+                    row["status"] = status
+                    status_i = status_switch(status)
+                    new_date = date.today().strftime("%d/%m/%Y")
+                    if status_i == 0:
+                        pass
+                    elif status_i == 1:
+                        row["date_rejected"] = new_date
+                    elif status_i == 2:
+                        row["date_interviewed"] = new_date
+                    elif status_i == 3:
+                        row["date_accepted"] = new_date
+    
+                csvwriter.writerow(row)
+        
+        shutil.move(tempfile.name, LOGS_FN)
+
+    def show_update(self):
+        if self.update.isVisible():
+            self.update.hide()
+        else:
+            self.update.show()
 
     def set_status(self,status):
         self.status_edit.setCurrentIndex(status_switch(status))
@@ -165,7 +197,7 @@ class LogDialog(QMainWindow):
         self.close()
     
     def log_csv_data(self):
-        with open("job_logs.csv", mode='a+', newline='') as logscsv:
+        with open(LOGS_FN, mode='a+', newline='') as logscsv:
             log = job_log(self.title_edit.text(), \
                           self.company_edit.text(), \
                           self.status_edit.currentText(), \
@@ -179,7 +211,7 @@ class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
         self.setWindowTitle('Job Logger')
-        self.setGeometry(300,200,300,200)
+        self.setGeometry(500,200,800,600)
         self.initUI()
 
     
@@ -193,6 +225,7 @@ class MainWindow(QMainWindow):
 
         jobs_list = QListWidget()
         jobs_list.setAlternatingRowColors(True)
+        jobs_list.itemClicked.connect(self.on_list_item_clicked)
         self.populate_list(jobs_list)
 
         btn.setToolTip('Use this to add a job log')
@@ -209,24 +242,27 @@ class MainWindow(QMainWindow):
         self.dialogs.append(dialog)
         dialog.show()
     
+    def on_list_item_clicked(self, item):
+        item.widget.show_update()
+
     def populate_list(self, jobs_list):
         # TODO: Add "Show rejected and old" button
-        with open("job_logs.csv", mode='r', newline='') as logscsv:
-            csv_reader = reader(logscsv, delimiter=',')          
+        with open(LOGS_FN, mode='r', newline='') as logscsv:
+            csv_reader = DictReader(logscsv, delimiter=',', fieldnames=FIELD_NAMES)          
             jobs = [row for row in csv_reader]
             jobs.pop(0) # get rid of labels line
             for job in jobs:
                 list_item = QCustomQWidget()
-                list_item.set_upper_text(job[0])
-                list_item.set_lower_text(job[1])
-                list_item.set_date_text("Date Applied: " + job[2])
-                list_item.set_status(job[3])
+                list_item.set_upper_text(job['title'])
+                list_item.set_lower_text(job['company'])
+                list_item.set_date_text("Date Applied: " + job['date_applied'])
+                list_item.set_status(job['status'])
 
                 widget_item = QListWidgetItem(jobs_list)
                 widget_item.setSizeHint(list_item.sizeHint())
                 jobs_list.addItem(widget_item)
                 jobs_list.setItemWidget(widget_item, list_item)
-                print(job[0])       
+                print(job['title'])       
         
 
 def main():

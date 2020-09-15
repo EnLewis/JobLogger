@@ -1,0 +1,2 @@
+*.csv
+!jobs_log_template.csv
