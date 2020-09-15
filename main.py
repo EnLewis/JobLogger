@@ -167,7 +167,8 @@ class LogDialog(QMainWindow):
 
         self.title_edit = QLineEdit(self)
         self.company_edit = QLineEdit(self)
-        self.date_edit = QLineEdit(self, date.today().strftime("%d/%m/%Y"))
+        self.date_edit = QLineEdit(self)
+        self.date_edit.setText(date.today().strftime("%d/%m/%Y"))
         self.status_edit = QComboBox(self)
         self.status_edit.addItems(["No Response", "Rejected", "Interviewed", "Accepted"])
         self.url_edit = QLineEdit(self)
